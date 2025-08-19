@@ -33,11 +33,15 @@ public class JwtAuthenticationFilter  extends OncePerRequestFilter {
         String username = null;
         String jwt = null;
 
-        if (authHeader != null || !authHeader.startsWith("Bearer ")) {
-
-            jwt = authHeader.substring(7);
-            username = jwtUtils.extractUsername(jwt);
+        // ¡LÓGICA CORREGIDA!
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return; // Si no hay token Bearer, no hacemos nada y pasamos al siguiente filtro.
         }
+
+        jwt = authHeader.substring(7);
+        username = jwtUtils.extractUsername(jwt);
+
         // Si hay usuario y aún no está autenticado en el contexto de Spring
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 

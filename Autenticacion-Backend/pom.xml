@@ -28,6 +28,10 @@
     </scm>
     <properties>
         <java.version>17</java.version>
+        <!-- ========================================================== -->
+        <!-- NUEVA PROPIEDAD: Versión de MapStruct                      -->
+        <!-- ========================================================== -->
+        <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
     </properties>
     <dependencies>
         <dependency>
@@ -41,6 +45,14 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- ========================================================== -->
+        <!-- NUEVA DEPENDENCIA: MapStruct Core                          -->
+        <!-- ========================================================== -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${org.mapstruct.version}</version>
         </dependency>
 
         <dependency>
@@ -59,7 +71,6 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
-
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -91,18 +102,40 @@
 
     <build>
         <plugins>
+            <!-- ====================================================================== -->
+            <!-- SECCIÓN MODIFICADA: maven-compiler-plugin                              -->
+            <!-- Ahora incluye los procesadores de anotaciones para Lombok y MapStruct  -->
+            <!-- ====================================================================== -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <!-- Es bueno especificar la versión del plugin explícitamente -->
+                <version>3.11.0</version>
                 <configuration>
+                    <!-- No es necesario especificar source/target si ya lo heredas de spring-boot-starter-parent -->
                     <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${org.mapstruct.version}</version>
+                        </path>
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+                            <!-- La versión de Lombok se hereda del parent, no es necesario especificarla -->
+                            <version>${lombok.version}</version>
+                        </path>
+                        <!-- Esta dependencia asegura que Lombok se ejecute antes que MapStruct -->
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok-mapstruct-binding</artifactId>
+                            <version>0.2.0</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+            <!-- ====================================================================== -->
+
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

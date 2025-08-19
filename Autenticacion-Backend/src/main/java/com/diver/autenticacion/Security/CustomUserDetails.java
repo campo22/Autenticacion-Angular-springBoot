@@ -32,4 +32,10 @@ public class CustomUserDetails implements UserDetails {
     public String getUsername() {
         return user.getUsername();
     }
+
+    public String getEmail(){
+        return user.getEmail();
+    }
+
+
 }

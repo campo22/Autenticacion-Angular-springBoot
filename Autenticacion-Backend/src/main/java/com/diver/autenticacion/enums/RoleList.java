@@ -2,5 +2,6 @@ package com.diver.autenticacion.enums;
 
 public enum RoleList {
     ROLE_USER,
-    ROLE_ADMIN
+    ROLE_MODERATOR,
+    ROLE_ADMIN,
 }

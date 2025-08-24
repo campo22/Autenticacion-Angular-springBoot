@@ -6,13 +6,13 @@ import com.diver.autenticacion.Dto.reques.RefreshRequestDTO;
 import com.diver.autenticacion.Dto.reques.RegisterRequestDTO;
 import com.diver.autenticacion.Dto.response.AuthResponseDTO;
 import com.diver.autenticacion.Exceptions.TokenRefreshException;
-import com.diver.autenticacion.Repository.RolesRepository;
+import com.diver.autenticacion.Repository.RoleRepository;
 import com.diver.autenticacion.Repository.UserRepository;
 import com.diver.autenticacion.Security.CustomUserDetails;
 import com.diver.autenticacion.Services.AuthService;
 import com.diver.autenticacion.Services.CustomUserDetailsService;
 import com.diver.autenticacion.config.JwtUtils;
-import com.diver.autenticacion.entities.Roles;
+import com.diver.autenticacion.entities.Role;
 import com.diver.autenticacion.entities.User;
 import com.diver.autenticacion.enums.RoleList;
 import com.diver.autenticacion.mapper.UserMapper;
@@ -28,7 +28,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,7 +38,7 @@ public class AuthServiceImpl implements AuthService {
 
 
     private final UserRepository userRepository;
-    private final RolesRepository roleRepository;
+    private final RoleRepository roleRepository;
 
     // Dependencias de Seguridad y JWT
     private final PasswordEncoder passwordEncoder;
@@ -74,16 +73,33 @@ public class AuthServiceImpl implements AuthService {
         user.setEmail(registerRequest.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
 
-        Set<Roles> roles = new HashSet<>();
-        Roles userRole = roleRepository.findByName(RoleList.ROLE_USER)
-                .orElseThrow(() -> new RuntimeException("Error: Rol por defecto 'ROLE_USER' no encontrado en la base de datos."));
-        roles.add(userRole);
-        user.setRoles(roles);
+        RoleList userRolesEnum;
 
-        User savedUser = userRepository.save(user);
-        log.info("Usuario {} registrado exitosamente con id {}", savedUser.getUsername(), savedUser.getId());
+        if (registerRequest.getRole() != null && !registerRequest.getRole().isBlank()) {
+            String requestRoles = registerRequest.getRole().toUpperCase();
+
+            if (requestRoles.equals("MODERATOR")) {
+                userRolesEnum = RoleList.ROLE_MODERATOR;
+            } else if (requestRoles.equals("USER")) {
+                userRolesEnum = RoleList.ROLE_USER;
+            } else {
+                throw new IllegalArgumentException("Error: El rol proporcionado no es válido.");
+            }
+        } else {
+            userRolesEnum = RoleList.ROLE_USER;
+        }
+
+        Role userRole = roleRepository.findByName(userRolesEnum)
+                .orElseThrow(() -> new RuntimeException(String.format(" El rol %s no existe en la base de datos.", userRolesEnum)));
+
+        user.setRoles(Set.of( userRole));
+        log.info("Rol asignado correctamente al usuario: {}", userRolesEnum.name());
+
+    User savedUser = userRepository.save(user);
+        log.info("Usuario {} registrado exitosamente con id {}",savedUser.getUsername(),savedUser.getId());
 
         return userMapper.toUserDTO(savedUser);
+
     }
 
     /**
@@ -103,7 +119,7 @@ public class AuthServiceImpl implements AuthService {
 
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        
+
 
         String accessToken = jwtUtils.generateToken(authentication);
         String refreshToken = jwtUtils.generateRefreshToken(authentication);

@@ -47,6 +47,13 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <!-- ========================================================== -->
+        <!-- NUEVA DEPENDENCIA: Validation starter                      -->
+        <!-- ========================================================== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <!-- ========================================================== -->
         <!-- NUEVA DEPENDENCIA: MapStruct Core                          -->
         <!-- ========================================================== -->
         <dependency>

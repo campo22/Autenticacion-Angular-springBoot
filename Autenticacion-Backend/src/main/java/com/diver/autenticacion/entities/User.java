@@ -26,7 +26,7 @@ public class User {
     
     @Column(nullable = false, unique = true)
     private String email;
-    
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "users_roles",
@@ -39,5 +39,5 @@ public class User {
                     referencedColumnName = "id"
             )
     )
-    private Set<Roles> roles= new HashSet<>();
+    private Set<Role> roles= new HashSet<>();
 }

@@ -10,13 +10,14 @@ import lombok.Setter;
 import java.util.HashSet;
 import java.util.Set;
 
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table( name = "roles")
-public class Roles {
+public class Role {
 
     @Id
     @GeneratedValue( strategy =  GenerationType.IDENTITY)
@@ -26,6 +27,8 @@ public class Roles {
     @Column( nullable = false, unique = true)
     private RoleList name ;
 
-    @ManyToMany( mappedBy = "roles")
-    private Set<User> users = new HashSet<>();
+
+    public Role(RoleList name) {
+        this.name = name;
+    }
 }

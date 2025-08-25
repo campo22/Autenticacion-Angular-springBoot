@@ -1,14 +1,11 @@
 package com.diver.autenticacion.entities;
 
-import com.diver.autenticacion.enums.RoleList;
+import com.diver.autenticacion.enums.ERole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.HashSet;
-import java.util.Set;
 
 
 @Getter
@@ -25,10 +22,10 @@ public class Role {
 
     @Enumerated( EnumType.STRING)
     @Column( nullable = false, unique = true)
-    private RoleList name ;
+    private ERole name ;
 
 
-    public Role(RoleList name) {
+    public Role(ERole name) {
         this.name = name;
     }
 }

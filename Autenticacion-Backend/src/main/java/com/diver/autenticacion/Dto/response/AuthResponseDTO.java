@@ -9,7 +9,6 @@ import java.util.Set;
 @AllArgsConstructor
 public class AuthResponseDTO {
     private String token;
-    private String refreshToken;
     private String username;
     private String email;
     private Set<String> roles;

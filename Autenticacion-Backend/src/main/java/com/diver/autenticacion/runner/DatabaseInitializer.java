@@ -2,7 +2,7 @@ package com.diver.autenticacion.runner;
 
 import com.diver.autenticacion.Repository.RoleRepository;
 import com.diver.autenticacion.entities.Role;
-import com.diver.autenticacion.enums.RoleList;
+import com.diver.autenticacion.enums.ERole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -22,7 +22,7 @@ public class DatabaseInitializer implements CommandLineRunner {
         log.info("Inicializando roles en la base de datos...");
 
         // Itera sobre todos los valores del Enum RoleList
-        Arrays.stream(RoleList.values()).forEach(erole -> {
+        Arrays.stream(ERole.values()).forEach(erole -> {
             // Comprueba si el rol ya existe en la base de datos
             if (!roleRepository.findByName(erole).isPresent()) {
                 // Si no existe, lo crea y lo guarda

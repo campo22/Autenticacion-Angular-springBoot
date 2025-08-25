@@ -5,13 +5,18 @@ import com.diver.autenticacion.Dto.reques.LoginRequestDTO;
 import com.diver.autenticacion.Dto.reques.RefreshRequestDTO;
 import com.diver.autenticacion.Dto.reques.RegisterRequestDTO;
 import com.diver.autenticacion.Dto.response.AuthResponseDTO;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface AuthService {
 
+    // el resultado de la autenticación es un AuthResponseDTO y un refreshToken
+    // el record AuthResult es un registro de dos campos authResponse y refreshToken
+    record AuthResult(AuthResponseDTO authResponse, String refreshToken) {}
+
     UserDto register(RegisterRequestDTO registerRequestDTO);
 
-    AuthResponseDTO login(LoginRequestDTO loginRequestDTO);
+    AuthResult login(LoginRequestDTO loginRequestDTO);
 
-    AuthResponseDTO refresh(RefreshRequestDTO refreshRequestDTO);
+    AuthResult refresh(HttpServletRequest request);
 
 }

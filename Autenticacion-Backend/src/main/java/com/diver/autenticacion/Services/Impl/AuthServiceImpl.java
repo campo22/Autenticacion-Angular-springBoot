@@ -2,7 +2,6 @@ package com.diver.autenticacion.Services.Impl;
 
 import com.diver.autenticacion.Dto.UserDto;
 import com.diver.autenticacion.Dto.reques.LoginRequestDTO;
-import com.diver.autenticacion.Dto.reques.RefreshRequestDTO;
 import com.diver.autenticacion.Dto.reques.RegisterRequestDTO;
 import com.diver.autenticacion.Dto.response.AuthResponseDTO;
 import com.diver.autenticacion.Exceptions.TokenRefreshException;
@@ -11,11 +10,16 @@ import com.diver.autenticacion.Repository.UserRepository;
 import com.diver.autenticacion.Security.CustomUserDetails;
 import com.diver.autenticacion.Services.AuthService;
 import com.diver.autenticacion.Services.CustomUserDetailsService;
+import com.diver.autenticacion.config.CookieUtil;
 import com.diver.autenticacion.config.JwtUtils;
+
 import com.diver.autenticacion.entities.Role;
 import com.diver.autenticacion.entities.User;
-import com.diver.autenticacion.enums.RoleList;
+
+import com.diver.autenticacion.enums.ERole;
 import com.diver.autenticacion.mapper.UserMapper;
+
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,6 +32,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,91 +41,65 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-
-    // Dependencias de Seguridad y JWT
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
-    private final CustomUserDetailsService userDetailsService;
-
-    // Dependencia de Mapeo
     private final UserMapper userMapper;
+    private final CustomUserDetailsService userDetailsService;
+    private final CookieUtil cookieUtil;
 
-    /**
-     * Registra un nuevo usuario con el rol por defecto 'ROLE_USER'.
-     * La operación es transaccional para garantizar la integridad de los datos.
-     *
-     * @param registerRequest DTO con los datos del nuevo usuario.
-     * @return UserDTO con la información pública del usuario recién creado.
-     */
     @Override
     @Transactional
     public UserDto register(RegisterRequestDTO registerRequest) {
+        // ... (Lógica de registro sin cambios, como la teníamos en la versión final)
         log.info("Iniciando registro para el usuario: {}", registerRequest.getUsername());
-
         if (userRepository.existsByUsername(registerRequest.getUsername())) {
             throw new IllegalArgumentException("Error: El nombre de usuario ya está en uso.");
         }
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
             throw new IllegalArgumentException("Error: El email ya está en uso.");
         }
-
         User user = new User();
         user.setUsername(registerRequest.getUsername());
         user.setEmail(registerRequest.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
 
-        RoleList userRolesEnum;
-
+        ERole userRoleEnum;
         if (registerRequest.getRole() != null && !registerRequest.getRole().isBlank()) {
-            String requestRoles = registerRequest.getRole().toUpperCase();
-
-            if (requestRoles.equals("MODERATOR")) {
-                userRolesEnum = RoleList.ROLE_MODERATOR;
-            } else if (requestRoles.equals("USER")) {
-                userRolesEnum = RoleList.ROLE_USER;
+            String requestedRole = registerRequest.getRole().toUpperCase();
+            if (requestedRole.equals("SUPERVISOR")) {
+                userRoleEnum = ERole.ROLE_MODERATOR;
+            } else if (requestedRole.equals("USER")) {
+                userRoleEnum = ERole.ROLE_USER;
             } else {
-                throw new IllegalArgumentException("Error: El rol proporcionado no es válido.");
+                throw new IllegalArgumentException("Error: El rol '" + registerRequest.getRole() + "' no es válido o no está permitido para el registro.");
             }
         } else {
-            userRolesEnum = RoleList.ROLE_USER;
+            userRoleEnum = ERole.ROLE_USER;
         }
 
-        Role userRole = roleRepository.findByName(userRolesEnum)
-                .orElseThrow(() -> new RuntimeException(String.format(" El rol %s no existe en la base de datos.", userRolesEnum)));
+        Role userRole = roleRepository.findByName(userRoleEnum)
+                .orElseThrow(() -> new RuntimeException("Error: El rol " + userRoleEnum.name() + " no fue encontrado en la base de datos."));
 
-        user.setRoles(Set.of( userRole));
-        log.info("Rol asignado correctamente al usuario: {}", userRolesEnum.name());
-
-    User savedUser = userRepository.save(user);
-        log.info("Usuario {} registrado exitosamente con id {}",savedUser.getUsername(),savedUser.getId());
-
+        user.setRoles(Set.of(userRole));
+        User savedUser = userRepository.save(user);
+        log.info("Usuario {} registrado exitosamente con el rol {}", savedUser.getUsername(), userRoleEnum.name());
         return userMapper.toUserDTO(savedUser);
-
     }
 
-    /**
-     * Autentica a un usuario y le proporciona un set de tokens de acceso y refresco.
-     *
-     * @param loginRequest DTO con las credenciales del usuario.
-     * @return AuthResponseDTO que contiene los tokens y la información del usuario.
-     */
     @Override
     @Transactional(readOnly = true)
-    public AuthResponseDTO login(LoginRequestDTO loginRequest) {
+    public AuthResult login(LoginRequestDTO loginRequest) {
         log.info("Intentando autenticar al usuario: {}", loginRequest.getUsername());
+
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-
-
         String accessToken = jwtUtils.generateToken(authentication);
         String refreshToken = jwtUtils.generateRefreshToken(authentication);
 
@@ -128,45 +107,42 @@ public class AuthServiceImpl implements AuthService {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toSet());
 
-        log.info("Usuario {} autenticado correctamente.", userDetails.getUsername());
-
-        return new AuthResponseDTO(
+        AuthResponseDTO authResponse = new AuthResponseDTO(
                 accessToken,
-                refreshToken,
                 userDetails.getUsername(),
-                ((CustomUserDetails) userDetails).getEmail(),
+                userDetails.getEmail(),
                 roles
         );
+
+        log.info("Usuario {} autenticado correctamente.", userDetails.getUsername());
+        return new AuthResult(authResponse, refreshToken);
     }
 
-    /**
-     * Refresca un token de acceso expirado utilizando un token de refresco válido.
-     * Implementa la rotación de tokens de refresco por seguridad.
-     *
-     * @param refreshRequest DTO que contiene el token de refresco.
-     * @return AuthResponseDTO con un nuevo token de acceso y un nuevo token de refresco.
-     */
     @Override
     @Transactional(readOnly = true)
-    public AuthResponseDTO refresh(RefreshRequestDTO refreshRequest) {
-        String requestRefreshToken = refreshRequest.refreshToken();
-        log.info("Intentando refrescar token.");
+    public AuthResult refresh(HttpServletRequest request) {
 
-        // 1. Validar la integridad criptográfica del token.
-        if (!jwtUtils.validateToken(requestRefreshToken)) {
-            throw new TokenRefreshException(requestRefreshToken, "Refresh token inválido, expirado o malformado.");
+        String requestRefreshToken = cookieUtil.readRefreshTokenCookie(request);
+
+        if (requestRefreshToken == null) {
+            throw new TokenRefreshException(null, "No se encontró la cookie de refresh token.");
         }
 
-        // 2. Extraer username y verificar que el usuario sigue siendo válido en nuestro sistema.
+        log.info("Intentando refrescar token desde cookie.");
+
+        if (!jwtUtils.validateToken(requestRefreshToken)) {
+            throw new TokenRefreshException(requestRefreshToken, "Refresh token en cookie es inválido, expirado o malformado.");
+        }
+
         String username = jwtUtils.extractUsername(requestRefreshToken);
         UserDetails userDetails;
+
         try {
             userDetails = this.userDetailsService.loadUserByUsername(username);
         } catch (Exception e) {
             throw new TokenRefreshException(requestRefreshToken, "El usuario asociado al token ya no es válido.");
         }
 
-        // 3. Generar un nuevo juego de tokens (rotación).
         String newAccessToken = jwtUtils.generateTokenFromUsername(userDetails.getUsername());
         String newRefreshToken = jwtUtils.generateRefreshTokenFromUsername(userDetails.getUsername());
 
@@ -174,14 +150,14 @@ public class AuthServiceImpl implements AuthService {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toSet());
 
-        log.info("Tokens refrescados exitosamente para el usuario: {}", username);
-
-        return new AuthResponseDTO(
+        AuthResponseDTO authResponse = new AuthResponseDTO(
                 newAccessToken,
-                newRefreshToken,
                 userDetails.getUsername(),
                 ((CustomUserDetails) userDetails).getEmail(),
                 roles
         );
+
+        log.info("Tokens refrescados exitosamente para el usuario: {}", username);
+        return new AuthResult(authResponse, newRefreshToken);
     }
 }

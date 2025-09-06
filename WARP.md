@@ -14,7 +14,7 @@ Este es un proyecto de autenticación completo que consta de dos componentes pri
 - API REST
 
 ### Frontend (Autenticacion-Frontend)
-- Angular 19
+- Angular 17
 - SSR (Server-Side Rendering) habilitado
 - RxJS para manejo de estados y operaciones asíncronas
 

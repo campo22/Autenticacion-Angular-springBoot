@@ -42,8 +42,7 @@ app.use('/**', async (req, res, next) => {
     const html = await engine.render({
       bootstrap: AppComponent,
       documentFilePath: resolve(browserDistFolder, 'index.html'),
-      url: req.url,
-      providers: config.providers,
+      url: req.url
     });
     res.send(html);
   } catch (err) {

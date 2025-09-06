@@ -92,21 +92,38 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional(readOnly = true)
     public AuthResult login(LoginRequestDTO loginRequest) {
+        // Registra el intento de autenticación para el usuario especificado.
         log.info("Intentando autenticar al usuario: {}", loginRequest.getUsername());
 
+        // Autentica al usuario utilizando el AuthenticationManager.
+        // Se crea un UsernamePasswordAuthenticationToken con el nombre de usuario y la contraseña
+        // proporcionados en la solicitud de login.
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
+        // Establece el objeto Authentication en el SecurityContextHolder.
+        // Esto es crucial para que Spring Security reconozca que el usuario está autenticado
+        // en el contexto actual de la aplicación.
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
+        // Obtiene los detalles del usuario autenticado.
+        // Se espera que el principal de la autenticación sea una instancia de CustomUserDetails.
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        // Genera un token de acceso JWT para el usuario autenticado.
+        // Este token se utilizará para futuras solicitudes autenticadas.
         String accessToken = jwtUtils.generateToken(authentication);
+        // Genera un refresh token JWT.
+        // Este token se utilizará para obtener nuevos tokens de acceso sin necesidad de reautenticación.
         String refreshToken = jwtUtils.generateRefreshToken(authentication);
 
+        // Extrae los roles (autoridades) del usuario autenticado y los convierte en un conjunto de cadenas.
         Set<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toSet());
 
+        // Construye el objeto AuthResponseDTO que contiene la información del usuario autenticado
+        // y el token de acceso.
         AuthResponseDTO authResponse = new AuthResponseDTO(
                 accessToken,
                 userDetails.getUsername(),
@@ -114,7 +131,9 @@ public class AuthServiceImpl implements AuthService {
                 roles
         );
 
+        // Registra que el usuario ha sido autenticado correctamente.
         log.info("Usuario {} autenticado correctamente.", userDetails.getUsername());
+        // Devuelve un objeto AuthResult que encapsula la respuesta de autenticación y el refresh token.
         return new AuthResult(authResponse, refreshToken);
     }
 

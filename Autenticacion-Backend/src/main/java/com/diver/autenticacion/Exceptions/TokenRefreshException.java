@@ -3,6 +3,13 @@ package com.diver.autenticacion.Exceptions;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+/**
+ * Excepción lanzada cuando ocurre un error en el proceso de refresco de token.
+ * La excepción se anota con {@link ResponseStatus} para indicar que debería devolver un código de estado HTTP 403 Forbidden.
+ *
+ * @author Diver
+ * @since 1.0
+ */
 @ResponseStatus(HttpStatus.FORBIDDEN) // Esto hará que devuelva un 403 Forbidden por defecto
 public class TokenRefreshException extends RuntimeException {
     public TokenRefreshException(String token, String message) {

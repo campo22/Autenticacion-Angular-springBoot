@@ -40,11 +40,11 @@ public class CookieUtil {
     public Cookie createRefreshTokenCookie(String token) {
         Cookie cookie = new Cookie(refreshTokenCookieName, token);
         cookie.setHttpOnly(true); // ¡CRUCIAL! Previene el acceso desde JavaScript (protección XSS).
-        cookie.setSecure(true);   // Solo se envía sobre HTTPS. Poner a false en desarrollo si NO usas SSL.
+        cookie.setSecure(false);   // Solo se envía sobre HTTPS. Poner a false en desarrollo si NO usas SSL.
         cookie.setPath("/api/auth"); // Limita la cookie a los endpoints de autenticación.
         cookie.setMaxAge((int) (refreshTokenDurationMs / 1000)); // La duración debe ser en segundos.
         cookie.setDomain(null); // O el dominio específico si frontend y backend están en subdominios diferentes.
-        // cookie.setSameSite("Strict"); // Protección CSRF. 'Strict' es el más seguro. 'Lax' es una alternativa común.
+        cookie.setSameSite("Strict"); // Protección CSRF. 'Strict' es el más seguro. 'Lax' es una alternativa común.
         return cookie;
     }
 

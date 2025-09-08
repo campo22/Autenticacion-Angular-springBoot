@@ -27,7 +27,7 @@ public class AuthController {
     private final AuthService authService;
     private final CookieUtil cookieUtil;
 
-    @PostMapping("/register")
+    @PostMapping("/register") // para probar el registro en postman pon: localhost:8080/api/auth/register
     public ResponseEntity<UserDto> registerUser(@Valid @RequestBody RegisterRequestDTO registerRequest) {
         UserDto registeredUser = authService.register(registerRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(registeredUser);

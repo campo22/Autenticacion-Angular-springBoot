@@ -3,74 +3,65 @@ package com.diver.autenticacion.config;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie; // <-- Importante: de Spring
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.WebUtils;
 
-/**
- * Utilidad para la gestión de cookies de la aplicación.
- * <p>
- * Proporciona métodos para crear y limpiar cookies HttpOnly,
- * asegurando que los atributos de seguridad (HttpOnly, Secure, SameSite)
- * se apliquen de forma consistente.
- * </p>
- */
 @Component
 public class CookieUtil {
 
-    /**
-     * Nombre de la cookie utilizada para el refresh token.
-     * Externalizado para consistencia.
-     */
     @Value("${jwt.refreshTokenCookieName}")
     private String refreshTokenCookieName;
 
-    /**
-     * Duración del refresh token en segundos.
-     * La cookie necesita la duración en segundos, no milisegundos.
-     */
     @Value("${jwt.refreshExpiration}")
     private Long refreshTokenDurationMs;
 
     /**
-     * Crea una cookie HttpOnly para el refresh token.
-     *
+     * Crea la cabecera Set-Cookie completa para el refresh token.
+     * Utiliza ResponseCookie.Builder para un control total sobre los atributos.
      * @param token El valor del refresh token.
-     * @return Un objeto {@link Cookie} configurado con las mejores prácticas de seguridad.
+     *
+     * <p>Este método construye una {@code ResponseCookie} que representa el refresh token.
+     * Configura la cookie con las siguientes propiedades:</p>
+     * <ul>
+     *     <li>{@code httpOnly(true)}: Impide el acceso a la cookie desde JavaScript, mitigando ataques XSS.</li>
+     *     <li>{@code secure(false)}: Permite que la cookie se envíe sobre conexiones HTTP (útil para desarrollo local).</li>
+     *     <li>{@code path("/api/auth")}: Define el ámbito de la cookie, limitándola a las rutas bajo {@code /api/auth}.</li>
+     *     <li>{@code maxAge(refreshTokenDurationMs / 1000)}: Establece la duración de la cookie en segundos.</li>
+     *     <li>{@code sameSite("Lax")}: Ayuda a prevenir ataques CSRF (Cross-Site Request Forgery).</li>
+     * </ul>
+     * @return Un String formateado como una cabecera HTTP Set-Cookie.
      */
-    public Cookie createRefreshTokenCookie(String token) {
-        Cookie cookie = new Cookie(refreshTokenCookieName, token);
-        cookie.setHttpOnly(true); // ¡CRUCIAL! Previene el acceso desde JavaScript (protección XSS).
-        cookie.setSecure(false);   // Solo se envía sobre HTTPS. Poner a false en desarrollo si NO usas SSL.
-        cookie.setPath("/api/auth"); // Limita la cookie a los endpoints de autenticación. es decir solo se envia en
-        // la ruta /api/auth
-        cookie.setMaxAge((int) (refreshTokenDurationMs / 1000)); // La duración debe ser en segundos.
-        cookie.setDomain(null); // O el dominio específico si frontend y backend están en subdominios diferentes.
-      //  cookie.setSameSite("Strict"); // Protección CSRF. 'Strict' es el más seguro. 'Lax' es una alternativa común.
-        return cookie;
+    public String createRefreshTokenCookieHeader(String token) {
+        return ResponseCookie.from(refreshTokenCookieName, token)
+                .httpOnly(true)
+                .secure(false)
+                .path("/api/auth")
+                .maxAge(refreshTokenDurationMs / 1000)
+                .sameSite("Lax")
+                .build()
+                .toString();
     }
 
     /**
-     * Crea una cookie de limpieza para invalidar la cookie del refresh token.
-     * Esto se usa durante el logout.
-     *
-     * @return Un objeto {@link Cookie} que le indica al navegador que elimine la cookie existente.
+     * Crea la cabecera Set-Cookie para limpiar/eliminar la cookie del refresh token.
+     * @return Un String de cabecera Set-Cookie que invalida la cookie en el navegador.
      */
-    public Cookie cleanRefreshTokenCookie() {
-        Cookie cookie = new Cookie(refreshTokenCookieName, null); // Valor nulo
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/api/auth");
-        cookie.setMaxAge(0); // Expiración inmediata
-        cookie.setDomain(null);// null para eliminar la cookie en todos los subdominios
-        // cookie.setSameSite("Strict");
-        return cookie;
+    public String cleanRefreshTokenCookieHeader() {
+        return ResponseCookie.from(refreshTokenCookieName, "") // Valor vacío
+                .httpOnly(true)
+                .secure(false)
+                .path("/api/auth")
+                .maxAge(0) // Expiración inmediata
+                .sameSite("Lax")
+                .build()
+                .toString();
     }
 
     /**
-     * Lee la cookie del refresh token desde la petición HTTP.
-     *
-     * @param request La petición HTTP entrante.
-     * @return El valor del refresh token, o null si la cookie no se encuentra.
+     * Lee el valor de la cookie del refresh token desde la petición entrante.
+     * @param request La petición HttpServletRequest.
+     * @return El valor del token o null si no se encuentra.
      */
     public String readRefreshTokenCookie(HttpServletRequest request) {
         Cookie cookie = WebUtils.getCookie(request, refreshTokenCookieName);

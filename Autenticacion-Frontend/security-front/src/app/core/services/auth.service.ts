@@ -73,7 +73,6 @@ export class AuthService {
         this.accessToken = response.accessToken;
         this.currentUserSubject.next(response); // actualizamos el observable con el nuevo valor
         console.log('Login exitoso!', response);
-        this.router.navigate(['/products']);
 
       })
     );
@@ -120,8 +119,9 @@ export class AuthService {
    */
   trySilentRefresh(): Observable<boolean> {
 
+
     if (this.isRefreshing) {
-      return of(false); // Evita llamadas concurrentes
+      return of(false);
     }
     this.isRefreshing = true;
 

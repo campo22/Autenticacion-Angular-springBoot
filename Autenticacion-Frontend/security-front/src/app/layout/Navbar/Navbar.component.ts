@@ -21,6 +21,14 @@ import { AuthResponse } from '../../core/models/auth.model';
 
 export class NavbarComponent {
 
+  isOpen = false; // control del menú móvil
+
+  // Links dinámicos
+  links = [
+    { path: '/products', label: 'Productos', exact: true },
+
+  ]
+
   private authService = inject(AuthService)
 
   currentUser$: Observable<AuthResponse | null> = this.authService.currentUser$;

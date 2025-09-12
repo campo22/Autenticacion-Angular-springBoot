@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProductService } from '../product.service.ts.service';
 
@@ -28,12 +28,23 @@ export class ProductFormComponent implements OnInit {
   productId: number | null = null;
   errorMessage?: string | null = null;
 
+  private initForm(): void {
+    this.productForm = this.fb.group(
+
+      {
+        name: ['', [Validators.minLength(3)]],
+
+      }
+
+    )
 
 
 
-  constructor() { }
 
-  ngOnInit() {
+
+    constructor() { }
+
+    ngOnInit() {
+    }
+
   }
-
-}

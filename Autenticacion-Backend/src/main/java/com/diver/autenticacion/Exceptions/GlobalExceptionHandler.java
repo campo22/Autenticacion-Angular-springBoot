@@ -2,6 +2,7 @@ package com.diver.autenticacion.Exceptions;
 
 
 import com.diver.autenticacion.Dto.ErrorResponseDTO;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -66,10 +67,62 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDTO> handleAuthenticationException(AuthenticationException ex) {
         ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 HttpStatus.UNAUTHORIZED.value(),
-                "Credenciales inválidas o acceso denegado." // Mensaje genérico por seguridad
+                "No autenticado: token ausente, inválido o expirado. Inicia sesión o renueva tu token." // Mensaje claro para 401
         );
         log.warn("Fallo de autenticación: {}", ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Maneja los errores de autorización a nivel de método (por @PreAuthorize) y devuelve 403.
+     */
+    @ExceptionHandler(org.springframework.security.authorization.AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponseDTO> handleAuthorizationDenied(org.springframework.security.authorization.AuthorizationDeniedException ex,
+                                                                      HttpServletRequest request) {
+        String message = buildForbiddenMessage(request);
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
+                HttpStatus.FORBIDDEN.value(),
+                message
+        );
+        log.warn("Acceso denegado (método) [{} {}]: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Maneja AccessDeniedException (capa web) y devuelve 403.
+     */
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponseDTO> handleAccessDenied(org.springframework.security.access.AccessDeniedException ex,
+                                                               HttpServletRequest request) {
+        String message = buildForbiddenMessage(request);
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
+                HttpStatus.FORBIDDEN.value(),
+                message
+        );
+        log.warn("Acceso denegado [{} {}]: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Construye un mensaje 403 más específico según la ruta y el método HTTP.
+     * No expone detalles sensibles y mantiene consistencia en la API.
+     */
+    private String buildForbiddenMessage(HttpServletRequest request) {
+        String method = request.getMethod();
+        String uri = request.getRequestURI();
+
+        // Personalización para recursos de productos
+        if (uri != null && uri.startsWith("/api/products")) {
+            if ("DELETE".equalsIgnoreCase(method)) {
+                return "Acceso denegado: se requiere el rol ADMIN para eliminar productos.";
+            }
+            if ("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method)) {
+                return "Acceso denegado: se requieren los roles SUPERVISOR o ADMIN para crear o actualizar productos.";
+            }
+        }
+
+        // Mensaje por defecto si no hay una regla específica
+        return "Acceso denegado: no tienes permisos suficientes para realizar esta acción.";
     }
 
     /**

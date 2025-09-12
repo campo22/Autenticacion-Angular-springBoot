@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { Observable } from 'rxjs';
-import { AuthResponse } from '../../core/models/auth.model';
+import { AuthResponse } from '../../shared/models/auth.model';
 
 @Component({
   selector: 'app-Navbar',

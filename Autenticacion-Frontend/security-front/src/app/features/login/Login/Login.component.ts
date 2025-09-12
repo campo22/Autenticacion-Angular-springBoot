@@ -50,9 +50,9 @@ export class LoginComponent implements OnInit {
     this.authSerive.login(this.loginForm.value).subscribe({
       next: (response) => {
         // ¡Éxito!
-        console.log('Login exitoso!', response);
+        console.log('Login exitoso!aaaaa', response);
         // Redirigimos al usuario a la página de productos.
-        this.router.navigate(['/products']);
+
       },
       error: (err) => {
         // ¡Error!

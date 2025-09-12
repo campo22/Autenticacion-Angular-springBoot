@@ -7,6 +7,7 @@ import { ProductsComponent } from './features/products/Products/Products.compone
 import { authGuard } from './core/guards/auth.guard';
 import { loginGuard } from './core/guards/login.guard';
 import { roleGuard } from './core/guards/role.guard'; // ¡Importamos el nuevo guardián!
+import { ProductFormComponent } from './features/products/product-form/product-form.component';
 
 export const routes: Routes = [
   {
@@ -26,6 +27,20 @@ export const routes: Routes = [
         component: ProductsComponent,
         canActivate: [authGuard]
       },
+      {
+        path: 'new',
+        component: ProductFormComponent,
+        canActivate: [authGuard],
+        data: { expectedRole: [' ROLE_SUPERVISOR', 'ROLE_ADMIN'] }
+
+      },
+      {
+        path: 'edit/:id',
+        component: ProductFormComponent,
+        canActivate: [authGuard],
+        data: { expectedRole: [' ROLE_SUPERVISOR', 'ROLE_ADMIN'] }
+      },
+
 
       // // --- Rutas Protegidas por Rol ---
       // {

@@ -23,7 +23,9 @@ export class ProductFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Inicializamos el formulario
     this.initForm();
+    // Verificamos si estamos en modo edición
     this.checkModel();
   }
 
@@ -51,6 +53,7 @@ export class ProductFormComponent implements OnInit {
 
   private checkModel(): void {
 
+    // elparamMap nos permite acceder a los parámetros de la URL
     this.route.paramMap.pipe(
 
       // el switchMap significa que se suscribe a los cambios en los

@@ -21,14 +21,13 @@ export const authGuard: CanActivateFn = (route, state) => {
 
   return authService.currentUser$.pipe(
 
-    // `take(1)` es un operador de RxJS crucial aquí. Le dice al observable que
-    // emita solo el primer valor que reciba y luego se complete.
+    take(1),
 
     map(user => {
       const isAuthenticated = !!user;
 
+      // Si el usuario est  autenticado, permitimos la navegación
       if (isAuthenticated) {
-
         return true;
       }
 

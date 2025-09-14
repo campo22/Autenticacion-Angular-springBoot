@@ -30,6 +30,15 @@ public class JwtUtils {
 
     private Key key;
 
+
+    /**
+     * el @PostConstruct es un motodo que se ejecuta después de que todas las inyecciones de dependencias han sido
+     * completadas.
+     * Inicializa la clave secreta para la firma de JWT.
+     * Se ejecuta después de que las propiedades `@Value` han sido inyectadas.
+     * Verifica que la clave tenga una longitud mínima para HS256 y la convierte a un objeto `Key`.
+     */
+
     @PostConstruct
     public void init() {
         // Asegúrate de que tu secreto sea lo suficientemente largo para HS256 (mínimo 32 bytes/256 bits)

@@ -1,5 +1,7 @@
 package com.diver.autenticacion.config;
 
+import com.diver.autenticacion.Exceptions.RestAccessDeniedHandler;
+import com.diver.autenticacion.Exceptions.RestAuthenticationEntryPoint;
 import com.diver.autenticacion.Repository.UserRepository;
 import com.diver.autenticacion.Services.CustomUserDetailsService;
 import com.diver.autenticacion.Security.JwtEntryPoint;
@@ -16,7 +18,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -40,10 +41,16 @@ public class SecurityConfig {
 
     @Bean
     protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.cors(Customizer.withDefaults())
+        http
+                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)//Desactivar el csrf
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                .exceptionHandling(ex-> ex
+                        .authenticationEntryPoint(new RestAuthenticationEntryPoint()) // 401 personalizado
+                        .accessDeniedHandler(new RestAccessDeniedHandler())) // 403 personalizado
+
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**")
                         .permitAll()

@@ -70,7 +70,7 @@ public class AuthServiceImpl implements AuthService {
         if (registerRequest.getRole() != null && !registerRequest.getRole().isBlank()) {
             String requestedRole = registerRequest.getRole().toUpperCase();
             if (requestedRole.equals("SUPERVISOR")) {
-                userRoleEnum = ERole.ROLE_MODERATOR;
+                userRoleEnum = ERole.ROLE_SUPERVISOR;
             } else if (requestedRole.equals("USER")) {
                 userRoleEnum = ERole.ROLE_USER;
             } else {

@@ -1,30 +1,28 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-import { AuthService } from "../services/auth.service";
-import { inject } from "@angular/core";
+import { inject } from '@angular/core';
+import { AuthService } from '../services/auth.service';
 
-/**
- * El HttpInterceptorFn es una función que se utiliza para interceptar las peticiones HTTP
- * y agregar el token de autenticación a las solicitudes que se realizen en la aplicación.
- *
- * Función que se encarga de agregar el token de autenticación
- * a las solicitudes HTTP que se realizen en la aplicación.
- * @param rep petición HTTP que se va a realizar
- * @param next función que se encarga de realizar la petición
- * @returns la petición modificada para que incluya el token de autenticación
- */
-export const authInterceptor: HttpInterceptorFn = (rep, next) => {
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
+  const token = authService.getAccessToken;
 
-  const authSerive = inject(AuthService);
-  const token = authSerive.getAccessToken;
-
-  const cloned = rep.clone({
-    withCredentials: true, // Incluye las cookies en la petición
-    setHeaders: token ? { Authorization: `Bearer ${token}` } : {} // Agrega el token de autenticación si existe
+  // 1. Clonamos la petición UNA SOLA VEZ para añadir withCredentials.
+  // Esto asegura que TODAS las peticiones (login, refresh, products, etc.)
+  // siempre estén habilitadas para manejar cookies.
+  let clonedReq = req.clone({
+    withCredentials: true,
   });
 
-  // Devuelve la petición modificada para que incluya el token de autenticación
-  // y se realice la petición HTTP con la petición modificada y luego se pasa al siguiente interceptor
-  return next(cloned);
+  // 2. Si hay un token, clonamos DE NUEVO para añadir la cabecera.
+  // Esto solo se aplica a las peticiones que necesitan autenticación Bearer.
+  if (token) {
+    clonedReq = clonedReq.clone({
+      setHeaders: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
 
+  // 3. Pasamos la petición final.
+  return next(clonedReq);
 };
-

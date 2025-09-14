@@ -1,0 +1,7 @@
+/* styles.css */
+.active {
+  background-color: #1f2937; /* bg-gray-900 */
+  color: white !important;
+  border-bottom: 2px solid #fff;
+  transition: border-color 0.3s ease;
+}

@@ -2,7 +2,7 @@ import { inject } from "@angular/core";
 import { ActivatedRouteSnapshot, CanActivateFn, Router } from "@angular/router";
 import { AuthService } from "../services/auth.service";
 import { map, take } from "rxjs";
-import { isErrored } from "stream";
+
 
 
 export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot, state) => {
@@ -15,6 +15,7 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot, state) =
   // 'route.data' es donde podemos pasar datos personalizados a nuestro guardián.
   // ejemplo: route.data['expectedRole'] = ['admin', 'user']
   const expectedRole: string[] = route.data['expectedRole'];
+
 
 
   if (!expectedRole || expectedRole.length === 0) {

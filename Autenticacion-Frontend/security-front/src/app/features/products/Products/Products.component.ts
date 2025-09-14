@@ -6,6 +6,7 @@ import { Product } from '../../../shared/models/product.model';
 import { AuthResponse } from '../../../shared/models/auth.model';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { ConfirmationDialogComponent } from "../../../shared/components/confirmation-dialog/confirmation-dialog.component";
 
 
 @Component({
@@ -16,8 +17,8 @@ import { RouterLink } from '@angular/router';
   imports: [
     CommonModule, // el common module es necesario para el ngIf, el ngFor,async pipe ,
     CurrencyPipe, // el currency pipe es necesario para formatear el precio
-    RouterLink
-
+    RouterLink,
+    ConfirmationDialogComponent
   ]
 })
 export class ProductsComponent implements OnInit {
@@ -29,7 +30,30 @@ export class ProductsComponent implements OnInit {
   public currentUser$: Observable<AuthResponse | null> = this.authService.currentUser$
   public error?: string | null = null;
 
+  showDeleteConfirmation = false;
+  productToDelete: Product | null = null;
 
+
+
+
+  /**
+   * Muestra el diálogo de confirmación para eliminar un producto.
+   * Almacena el producto a eliminar en la propiedad "productToDelete" y muestra el diálogo de confirmación.
+   * @param product El producto a eliminar.
+   */
+  onDelete(product: Product): void {
+    this.productToDelete = product;
+    this.showDeleteConfirmation = true;
+  }
+
+  /**
+   * Cancela la eliminación de un producto.
+   * Oculta el diálogo de confirmación y restablece el producto a eliminar.
+   */
+  onCancelDelete(): void {
+    this.showDeleteConfirmation = false;
+    this.productToDelete = null;
+  }
 
 
   ngOnInit() {
@@ -54,16 +78,28 @@ export class ProductsComponent implements OnInit {
       })
     );
   }
-  delitProduct(id: number): void {
-    this.productService.deleteProduct(id).subscribe({
+  onConfirmDelete(): void {
+    if (!this.productToDelete) return;
+
+    this.productService.deleteProduct(this.productToDelete.id).subscribe({
       next: () => {
+        console.log(`Producto ${this.productToDelete?.name} eliminado exitosamente.`);
+
+        this.showDeleteConfirmation = false;
+        this.productToDelete = null;
+
         this.loadProducts();
+
       },
       error: (err) => {
         console.error('Error al eliminar el producto', err);
-        this.error = err.message;
+        this.error = 'Ocurrio un error al eliminar el producto';
+
+        this.showDeleteConfirmation = false;
+        this.productToDelete = null;
       }
     });
+
   }
   /**
    * Verifica si el usuario tiene alguno de los roles especificados.

@@ -5,6 +5,7 @@ import { catchError, Observable, of } from 'rxjs';
 import { Product } from '../../../shared/models/product.model';
 import { AuthResponse } from '../../../shared/models/auth.model';
 import { CommonModule, CurrencyPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 
 @Component({
@@ -14,7 +15,9 @@ import { CommonModule, CurrencyPipe } from '@angular/common';
   standalone: true,
   imports: [
     CommonModule, // el common module es necesario para el ngIf, el ngFor,async pipe ,
-    CurrencyPipe // el currency pipe es necesario para formatear el precio
+    CurrencyPipe, // el currency pipe es necesario para formatear el precio
+    RouterLink
+
   ]
 })
 export class ProductsComponent implements OnInit {
@@ -50,6 +53,17 @@ export class ProductsComponent implements OnInit {
 
       })
     );
+  }
+  delitProduct(id: number): void {
+    this.productService.deleteProduct(id).subscribe({
+      next: () => {
+        this.loadProducts();
+      },
+      error: (err) => {
+        console.error('Error al eliminar el producto', err);
+        this.error = err.message;
+      }
+    });
   }
   /**
    * Verifica si el usuario tiene alguno de los roles especificados.

@@ -13,13 +13,13 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot, state) =
 
   // 1. Obtenemos los roles esperados desde la configuración de la ruta.
   // 'route.data' es donde podemos pasar datos personalizados a nuestro guardián.
-  // ejemplo: route.data['expectedRole'] = ['admin', 'user']
-  const expectedRole: string[] = route.data['expectedRole'];
+  // ejemplo: route.data['expectedRoles'] = ['admin', 'user']
+  const expectedRoles: string[] = route.data['expectedRoles'];
 
 
 
-  if (!expectedRole || expectedRole.length === 0) {
-    // Si no se han especificado roles en la ruta, redirigimos al usuario a la p gina de login.
+  if (!expectedRoles || expectedRoles.length === 0) {
+    // Si no se han especificado roles en la ruta, redirigimos al usuario a la página de productos.
     console.error('No se han especificado roles en la ruta');
     return router.createUrlTree(['/products']);
   }
@@ -30,22 +30,21 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot, state) =
     map(user => {
 
       if (!user || !user.roles) {
-        // Si el usuario no está autenticado o no tiene roles, redirigimos al usuario a la p gina de login.
-        console.error('El usuario no est  autenticado o no tiene roles');
+        // Si el usuario no está autenticado o no tiene roles, redirigimos al usuario a la página de login.
+        console.error('El usuario no está autenticado o no tiene roles');
         return router.createUrlTree(['/login']);
       }
 
       // Comprobamos si el usuario tiene al menos uno de los roles esperados
-      const hasExpectedRole = user.roles.some(role => expectedRole.includes(role));
+      const hasExpectedRole = user.roles.some(role => expectedRoles.includes(role));
 
       if (hasExpectedRole) {
         return true;
       }
-      console.warn('No tienes permiso para acceder a esta p gina');
+      console.warn('No tienes permiso para acceder a esta página');
       return router.createUrlTree(['/products']);
     })
 
   )
 
 }
-
